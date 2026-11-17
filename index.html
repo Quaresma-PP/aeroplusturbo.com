@@ -1169,81 +1169,27 @@
     
  <script>
 (function () {
-  const STORAGE_KEY = "aeroplus_click_id";
+  var KEY = "aeroplus_click_id";
+  var SEL = 'a[href*="pagamentosprotegidos.com/checkout"]';
+  var params = new URLSearchParams(location.search);
+  var id = ["cid", "clickid", "click_id"].map(function (p) { return params.get(p); })
+    .find(function (v) { return v && v.indexOf("{") === -1; });
+  if (id) sessionStorage.setItem(KEY, id);
 
-  // Captura o identificador recebido na URL
-  const params = new URLSearchParams(window.location.search);
-
-  const possibleIds = [
-    "cid",
-    "click_id",
-    "clickid",
-    "ref_id"
-  ];
-
-  let clickId = null;
-
-  for (const param of possibleIds) {
-    const value = params.get(param);
-
-    if (value && !value.includes("{")) {
-      clickId = value;
-      break;
-    }
-  }
-
-  // Guarda o identificador para sobreviver à navegação
-  if (clickId) {
-    sessionStorage.setItem(STORAGE_KEY, clickId);
-  }
-
-  function getClickId() {
-    return sessionStorage.getItem(STORAGE_KEY);
-  }
-
-  // Atualiza os links de checkout
-  function updateCheckoutLinks() {
-    const id = getClickId();
-    if (!id) return;
-
-    document.querySelectorAll(
-      'a[href*="pagamentosprotegidos.com/checkout"]'
-    ).forEach(link => {
-      const url = new URL(link.href);
-      url.searchParams.set("clickid", id);
-      link.href = url.toString();
-    });
-  }
-
-  // Executa ao carregar
-  updateCheckoutLinks();
-
-  // Detecta botões adicionados dinamicamente
-  const observer = new MutationObserver(updateCheckoutLinks);
-
-  observer.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["href"]
-  });
-
-  // Garante a atualização antes do clique
-  document.addEventListener("click", function (event) {
-    const link = event.target.closest(
-      'a[href*="pagamentosprotegidos.com/checkout"]'
-    );
-
-    if (!link) return;
-
-    const id = getClickId();
-    if (!id) return;
-
-    const url = new URL(link.href);
-    url.searchParams.set("clickid", id);
+  function apply(link) {
+    var cid = sessionStorage.getItem(KEY);
+    if (!cid) return;
+    var url = new URL(link.href);
+    url.searchParams.delete("clickid");
+    url.searchParams.set("cid", cid);
     link.href = url.toString();
-  }, true);
+  }
 
+  document.querySelectorAll(SEL).forEach(apply);
+  document.addEventListener("click", function (e) {
+    var link = e.target.closest(SEL);
+    if (link) apply(link);
+  }, true);
 })();
 </script>
     
