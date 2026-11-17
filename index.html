@@ -1167,7 +1167,85 @@
     </div>
     
     
- 
+ <script>
+(function () {
+  const STORAGE_KEY = "aeroplus_click_id";
+
+  // Captura o identificador recebido na URL
+  const params = new URLSearchParams(window.location.search);
+
+  const possibleIds = [
+    "cid",
+    "click_id",
+    "clickid",
+    "ref_id"
+  ];
+
+  let clickId = null;
+
+  for (const param of possibleIds) {
+    const value = params.get(param);
+
+    if (value && !value.includes("{")) {
+      clickId = value;
+      break;
+    }
+  }
+
+  // Guarda o identificador para sobreviver à navegação
+  if (clickId) {
+    sessionStorage.setItem(STORAGE_KEY, clickId);
+  }
+
+  function getClickId() {
+    return sessionStorage.getItem(STORAGE_KEY);
+  }
+
+  // Atualiza os links de checkout
+  function updateCheckoutLinks() {
+    const id = getClickId();
+    if (!id) return;
+
+    document.querySelectorAll(
+      'a[href*="pagamentosprotegidos.com/checkout"]'
+    ).forEach(link => {
+      const url = new URL(link.href);
+      url.searchParams.set("clickid", id);
+      link.href = url.toString();
+    });
+  }
+
+  // Executa ao carregar
+  updateCheckoutLinks();
+
+  // Detecta botões adicionados dinamicamente
+  const observer = new MutationObserver(updateCheckoutLinks);
+
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["href"]
+  });
+
+  // Garante a atualização antes do clique
+  document.addEventListener("click", function (event) {
+    const link = event.target.closest(
+      'a[href*="pagamentosprotegidos.com/checkout"]'
+    );
+
+    if (!link) return;
+
+    const id = getClickId();
+    if (!id) return;
+
+    const url = new URL(link.href);
+    url.searchParams.set("clickid", id);
+    link.href = url.toString();
+  }, true);
+
+})();
+</script>
     
     
     
